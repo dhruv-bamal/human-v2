@@ -63,3 +63,23 @@ export function displayDate(date: string) {
     timeZone: "UTC",
   }).format(new Date(date + "T12:00:00Z"));
 }
+
+/** Evening-anchored date for an overnight session, in the configured local zone.
+ * 05:00 is the end of Dhruv's wind-down/sleep onset in the updated PDF.
+ * Compare the local clock (not a UTC duration) so DST zones remain correct.
+ */
+export function trainingDate(
+  person: "dhruv" | "annanya",
+  now = new Date(),
+  timeZone = "Asia/Kolkata",
+) {
+  const date = dateInZone(now, timeZone);
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).format(now),
+  );
+  return person === "dhruv" && hour < 5 ? addDays(date, -1) : date;
+}

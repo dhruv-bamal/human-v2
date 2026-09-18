@@ -1,6 +1,8 @@
 "use client";
 import { useState, useTransition } from "react";
-import { Check, LoaderCircle, Clock3 } from "lucide-react";
+import { Check, LoaderCircle, Clock3, Leaf } from "lucide-react";
+import { MealPrep } from "./meal-prep";
+import { addDays, displayDate } from "@/lib/dates";
 import {
   saveTask,
   saveMeal,
@@ -15,6 +17,7 @@ import type {
   Meal,
   MealOption,
   MealProgress,
+  LinkedRecipe,
   Person,
   Metric,
   Checkin,
@@ -148,12 +151,16 @@ export function TaskCard({
 }
 export function MealCard({
   meal,
+  recipes,
+  trainingDayDate,
   options,
   progress,
   day,
   editable,
 }: {
   meal: Meal;
+  recipes: LinkedRecipe[];
+  trainingDayDate: string | null;
   options: MealOption[];
   progress?: MealProgress;
   day: number;
@@ -191,8 +198,44 @@ export function MealCard({
           ) : null}
         </button>
       </div>
+      {meal.timing && (
+        <div className="meal-time">
+          <Clock3 size={15} />
+          <strong>{meal.timing}</strong>
+          <span>
+            {trainingDayDate
+              ? displayDate(addDays(trainingDayDate, meal.day_offset))
+              : ""}
+            {meal.day_offset ? " · after midnight" : ""}
+          </span>
+        </div>
+      )}
       <p className="menu">{meal.menu}</p>
+      {meal.vegetarian && (
+        <span className="vegetarian">
+          <Leaf size={14} /> Vegetarian
+        </span>
+      )}
       <p className="muted">{meal.notes}</p>
+      {recipes.length > 0 ? (
+        <MealPrep
+          meal={meal}
+          recipes={recipes}
+          editable={editable}
+          completed={completed}
+          pending={pending}
+          onComplete={() => run(() => save(true))}
+          status={<Status status={status} />}
+        />
+      ) : (
+        meal.person === "dhruv" && (
+          <p className="footnote">
+            The PDF lists this meal but does not supply a matching preparation
+            recipe.
+          </p>
+        )
+      )}
+
       <details>
         <summary>{options.length ? "Choices & notes" : "Meal notes"}</summary>
         {options.length > 0 && (

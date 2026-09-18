@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { Dashboard, type View } from "@/components/dashboard";
 import { plan } from "@/lib/plans";
-import { dateInZone } from "@/lib/dates";
+import { recipeData } from "@/lib/recipes";
+import { dateInZone, trainingDate } from "@/lib/dates";
 import type { Person, Profile } from "@/lib/types";
 export const dynamic = "force-dynamic";
 export default async function Preview({
@@ -38,6 +39,19 @@ export default async function Preview({
           checkins: [],
         },
         today,
+        trainingToday: { dhruv: trainingDate("dhruv"), annanya: today },
+        linkedRecipes: recipeData.links.map((link) => ({
+          ...link,
+          recipe: {
+            ...recipeData.recipes.find((r) => r.id === link.recipe_id)!,
+            recipe_ingredients: recipeData.ingredients.filter(
+              (i) => i.recipe_id === link.recipe_id,
+            ),
+            recipe_steps: recipeData.steps.filter(
+              (s) => s.recipe_id === link.recipe_id,
+            ),
+          },
+        })),
         zone: "Asia/Kolkata",
         view,
       }}

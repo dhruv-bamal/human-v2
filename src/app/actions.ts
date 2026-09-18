@@ -3,7 +3,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { supabase, configured } from "@/lib/supabase/server";
-import { dateInZone, canEditDay, validDate } from "@/lib/dates";
+import { trainingDate, canEditDay, validDate } from "@/lib/dates";
 import type { Person, Profile } from "@/lib/types";
 export type Result = { ok: boolean; message: string };
 const failed: Result = {
@@ -43,7 +43,11 @@ async function owner(requested: Person, dayNumber: number) {
     !canEditDay(
       profile.start_date,
       dayNumber,
-      dateInZone(new Date(), process.env.APP_TIMEZONE || "Asia/Kolkata"),
+      trainingDate(
+        requested,
+        new Date(),
+        process.env.APP_TIMEZONE || "Asia/Kolkata",
+      ),
     )
   )
     throw new Error("Access denied");

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireMember } from "@/lib/auth";
 import { loadDashboard } from "@/lib/load";
-import { dateInZone, programStatus } from "@/lib/dates";
+import { trainingDate, programStatus } from "@/lib/dates";
 import { Dashboard, type View } from "@/components/dashboard";
 import type { Person, Profile } from "@/lib/types";
 export const dynamic = "force-dynamic";
@@ -30,7 +30,11 @@ export default async function ProfilePage({
     search.day === undefined
       ? programStatus(
           (profile as Profile).start_date,
-          dateInZone(new Date(), process.env.APP_TIMEZONE || "Asia/Kolkata"),
+          trainingDate(
+            person as Person,
+            new Date(),
+            process.env.APP_TIMEZONE || "Asia/Kolkata",
+          ),
         ).day
       : Number(search.day);
   if (!Number.isInteger(requested) || requested < 1 || requested > 30)

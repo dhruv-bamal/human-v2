@@ -1464,3 +1464,258 @@ details[open] > summary {
 #meals {
   scroll-margin-top: 20px;
 }
+
+/* Meal prep stays in the daily tracker; the native dialog provides focus
+   containment, Escape dismissal and focus restoration to its trigger. */
+.meal-time {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 9px;
+  margin: 15px 0 5px;
+  font-size: 0.875rem;
+  color: var(--accent);
+}
+.meal-time span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.vegetarian {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--success);
+  margin: 8px 0;
+}
+.prep-open {
+  width: 100%;
+  margin: 16px 0 5px;
+  color: var(--accent);
+  background: var(--soft);
+}
+body:has(.prep-dialog[open]) {
+  overflow: hidden;
+}
+.prep-dialog {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 0;
+  width: min(720px, calc(100% - 32px));
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  box-shadow: 0 25px 90px #10243d40;
+}
+.prep-dialog::backdrop {
+  background: #13273eb3;
+  backdrop-filter: blur(4px);
+}
+.prep-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border);
+}
+.prep-header .eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.prep-header h2 {
+  font-size: 1.75rem;
+}
+.prep-header .icon-button {
+  flex: 0 0 44px;
+  height: 44px;
+}
+.prep-content {
+  padding: 24px 28px;
+}
+.prep-context {
+  background: var(--soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.prep-context h3 {
+  font-size: 1.125rem;
+  line-height: 1.55;
+  margin: 8px 0;
+}
+.prep-context p {
+  font-size: 0.9rem;
+}
+.prep-context .eyebrow {
+  font-size: 0.65rem;
+  color: var(--accent);
+}
+.prep-hint {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 18px 0 26px;
+}
+.prep-recipe + .prep-recipe {
+  border-top: 1px solid var(--border);
+  padding-top: 30px;
+  margin-top: 30px;
+}
+.recipe-title {
+  margin-bottom: 18px;
+}
+.recipe-title h2 {
+  font-size: 1.9rem;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+.recipe-diet {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.prep-section-title {
+  font-size: 1.1rem;
+  margin: 26px 0 8px;
+}
+.ingredients {
+  padding: 0;
+  margin: 12px 0 0;
+  list-style: none;
+}
+.ingredient {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  min-height: 54px;
+  border-bottom: 1px solid var(--border);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.ingredient:has(input:disabled) {
+  cursor: default;
+}
+.ingredient input {
+  width: 23px;
+  height: 23px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 23px;
+  accent-color: var(--success);
+}
+.ingredient strong {
+  font-weight: 400;
+}
+.ingredient small {
+  display: block;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.ingredient-checked strong {
+  text-decoration: line-through;
+  color: var(--success);
+}
+.prep-steps {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0;
+}
+.prep-steps li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin: 0 0 22px;
+}
+.prep-steps p {
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.step-number {
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.recipe-notes {
+  border-left: 3px solid var(--accent);
+  background: var(--paper);
+  padding: 16px 18px;
+  margin: 22px 0;
+}
+.recipe-notes p {
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+.prep-footer {
+  position: sticky;
+  bottom: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.prep-footer .form-status {
+  width: 100%;
+  margin: 0;
+}
+.prep-footer .primary {
+  flex: 1;
+}
+.kitchen-guide {
+  margin-top: 22px;
+}
+.kitchen-guide h2 {
+  margin: 10px 0;
+}
+.kitchen-guide > .eyebrow {
+  font-size: 0.65rem;
+}
+.kitchen-guide details {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 8px;
+}
+.kitchen-guide summary {
+  min-height: 44px;
+  align-content: center;
+  font-size: 0.95rem;
+}
+.kitchen-guide details p {
+  margin: 8px 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+@media (max-width: 600px) {
+  .prep-dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: 94dvh;
+    margin: auto 0 0;
+    border-radius: 18px 18px 0 0;
+  }
+  .prep-header {
+    padding: 20px;
+  }
+  .prep-content {
+    padding: 20px;
+  }
+  .prep-footer {
+    padding: 14px 20px max(14px, env(safe-area-inset-bottom));
+  }
+  .prep-footer .button {
+    width: 100%;
+  }
+  .recipe-title h2 {
+    font-size: 1.65rem;
+  }
+}

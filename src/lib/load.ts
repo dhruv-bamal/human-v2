@@ -1,7 +1,13 @@
 import "server-only";
 import { requireMember } from "./auth";
-import { dateInZone } from "./dates";
-import type { PlanData, ProgressData, Profile, Person } from "./types";
+import { dateInZone, trainingDate, rotationDay } from "./dates";
+import type {
+  PlanData,
+  ProgressData,
+  Profile,
+  Person,
+  LinkedRecipe,
+} from "./types";
 export async function loadDashboard(
   person?: Person,
   view = "overview",
@@ -68,6 +74,43 @@ export async function loadDashboard(
         source_page: 0,
       },
   );
+  const selectedPerson = person || viewer.id;
+  const selectedProfile = (profiles as Profile[]).find(
+    (p) => p.id === selectedPerson,
+  )!;
+  const rotation = rotationDay(
+    selectedPerson,
+    selectedDay || 1,
+    selectedProfile.start_date,
+  );
+  const slotIds = (meals as PlanData["meals"])
+    .filter((m) => m.person === selectedPerson && m.rotation_day === rotation)
+    .map((m) => m.id);
+  // One nested query, filtered to this day's slots; never fetch the whole recipe library.
+  const recipeResult =
+    slotIds.length && (view === "meals" || view === "overview")
+      ? await db
+          .from("meal_recipe_links")
+          .select("*,recipe:recipes(*,recipe_ingredients(*),recipe_steps(*))")
+          .in("slot_id", slotIds)
+      : { data: [], error: null };
+  if (recipeResult.error)
+    throw new Error("Your meal preparation could not be loaded.");
+  const linkedRecipes = (recipeResult.data as LinkedRecipe[])
+    .map((link) => ({
+      ...link,
+      recipe: {
+        ...link.recipe,
+        recipe_ingredients: [...link.recipe.recipe_ingredients].sort(
+          (a, b) => a.position - b.position,
+        ),
+        recipe_steps: [...link.recipe.recipe_steps].sort(
+          (a, b) => a.step_number - b.step_number,
+        ),
+      },
+    }))
+    .sort((a, b) => a.position - b.position);
+  const now = new Date();
   return {
     viewer,
     profiles: profiles as Profile[],
@@ -78,7 +121,12 @@ export async function loadDashboard(
       measurements,
       checkins,
     } as ProgressData,
-    today: dateInZone(new Date(), zone),
+    today: dateInZone(now, zone),
+    trainingToday: {
+      dhruv: trainingDate("dhruv", now, zone),
+      annanya: trainingDate("annanya", now, zone),
+    },
+    linkedRecipes,
     zone,
     view,
   };

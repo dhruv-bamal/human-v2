@@ -1,16 +1,8 @@
 import { database } from "./db";
-import { plan } from "../src/lib/plans";
+import { seedGroups } from "./seed-data";
 const sql = database();
 try {
-  for (const [table, rows] of [
-    ["programs", plan.programs],
-    ["program_days", plan.days],
-    ["plan_tasks", plan.tasks],
-    ["meal_slots", plan.meals],
-    ["meal_options", plan.options],
-    ["program_notes", plan.notes],
-    ["metric_definitions", plan.metrics],
-  ] as const) {
+  for (const [table, rows] of seedGroups) {
     const actual = await sql.unsafe(`select * from public.${table}`);
     if (actual.length !== rows.length)
       throw new Error(table + " count mismatch");
@@ -28,9 +20,9 @@ try {
     await sql`select id, auth_user_id is not null as linked, start_date is not null as scheduled from public.profiles order by id`;
   console.log("Profile readiness:", profiles);
   const rls =
-    await sql`select count(*)::int as count from pg_tables where schemaname='public' and rowsecurity=true and tablename in ('programs','profiles','program_days','plan_tasks','meal_slots','meal_options','program_notes','metric_definitions','task_progress','meal_progress','measurements','weekly_checkins','app_settings')`;
-  if (rls[0].count !== 13) throw new Error("RLS missing");
-  console.log("All 13 application tables have RLS enabled.");
+    await sql`select count(*)::int as count from pg_tables where schemaname='public' and rowsecurity=true and tablename in ('programs','profiles','program_days','plan_tasks','meal_slots','meal_options','program_notes','metric_definitions','task_progress','meal_progress','measurements','weekly_checkins','app_settings','recipes','recipe_ingredients','recipe_steps','meal_recipe_links')`;
+  if (rls[0].count !== 17) throw new Error("RLS missing");
+  console.log("All 17 application tables have RLS enabled.");
 } catch {
   console.error(
     "Verification failed: seed, schema or connection differs from expectations.",

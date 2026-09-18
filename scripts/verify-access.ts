@@ -47,6 +47,24 @@ try {
           )[0].completed,
           true,
         );
+        assert.equal((await tx`select id from public.recipes`).length, 10);
+        assert.equal((await tx`select id from public.recipe_steps`).length, 40);
+        const rotation =
+          id === "dhruv"
+            ? Number(
+                (
+                  await tx`select extract(isodow from start_date)::int as day from profiles where id=${id}`
+                )[0].day,
+              )
+            : 1;
+        const slot = `${id}-meal-${rotation}-${id === "dhruv" ? "snack" : "1"}`;
+        await tx`insert into public.meal_progress(person,day,slot_id,completed,notes) values(${id},1,${slot},true,'rollback verification') on conflict(person,day,slot_id) do update set completed=true`;
+        assert.equal(
+          (
+            await tx`select completed from public.meal_progress where person=${id} and day=1 and slot_id=${slot}`
+          )[0].completed,
+          true,
+        );
         const peer = id === "dhruv" ? "annanya" : "dhruv";
         await assert.rejects(
           tx.savepoint(async (sp) => {
@@ -61,6 +79,30 @@ try {
         const changed =
           await tx`update public.task_progress set completed=false where person=${peer} returning person`;
         assert.equal(changed.length, 0);
+        assert.equal(
+          (
+            await tx`update public.meal_progress set completed=false where person=${peer} returning person`
+          ).length,
+          0,
+        );
+        const peerRotation =
+          peer === "dhruv"
+            ? Number(
+                (
+                  await tx`select extract(isodow from start_date)::int as day from profiles where id=${peer}`
+                )[0].day,
+              )
+            : 1;
+        await assert.rejects(
+          tx.savepoint(async (sp) => {
+            await sp`insert into public.meal_progress(person,day,slot_id,completed) values(${peer},1,${`${peer}-meal-${peerRotation}-1`},true) on conflict(person,day,slot_id) do update set completed=true`;
+          }),
+        );
+        await assert.rejects(
+          tx.savepoint(async (sp) => {
+            await sp`update public.recipes set notes='forbidden' where id='banana-milk-shake'`;
+          }),
+        );
         await tx.unsafe("reset role");
       }
       verified = true;
@@ -71,7 +113,7 @@ try {
   }
   assert(verified);
   console.log(
-    "Live PostgreSQL: both owners can save; both peer writes and future writes rejected. All test changes rolled back.",
+    "Live PostgreSQL: both owners can save meals and workouts; recipes readable, definitions protected; both peer writes and future writes rejected. All test changes rolled back.",
   );
 } catch {
   console.error("Access verification failed. No test changes were committed.");

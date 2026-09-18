@@ -43,6 +43,9 @@ export type Meal = {
   menu: string;
   optional: boolean;
   notes: string;
+  timing: string;
+  day_offset: number;
+  vegetarian: boolean | null;
 };
 export type MealOption = {
   id: string;
@@ -114,3 +117,45 @@ export type ProgressData = {
   measurements: Measurement[];
   checkins: Checkin[];
 };
+
+export type Recipe = {
+  id: string;
+  name: string;
+  vegetarian: boolean;
+  notes: string;
+  source_page: number;
+};
+export type RecipeIngredient = {
+  id: string;
+  recipe_id: string;
+  position: number;
+  ingredient_name: string;
+  quantity: string;
+  unit: string;
+  preparation_note: string;
+  optional: boolean;
+};
+export type RecipeStep = {
+  id: string;
+  recipe_id: string;
+  step_number: number;
+  instruction: string;
+};
+export type MealRecipeLink = {
+  id: string;
+  slot_id: string;
+  recipe_id: string;
+  position: number;
+  context: string;
+};
+export type RecipeData = {
+  recipes: Recipe[];
+  ingredients: RecipeIngredient[];
+  steps: RecipeStep[];
+  links: MealRecipeLink[];
+};
+export type RecipeWithDetails = Recipe & {
+  recipe_ingredients: RecipeIngredient[];
+  recipe_steps: RecipeStep[];
+};
+export type LinkedRecipe = MealRecipeLink & { recipe: RecipeWithDetails };

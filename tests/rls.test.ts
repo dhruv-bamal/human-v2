@@ -12,6 +12,9 @@ test("PostgreSQL RLS, identities, FK isolation, future dates, meals and protecte
     await db.exec(
       await readFile("supabase/migrations/001_initial.sql", "utf8"),
     );
+    await db.exec(
+      await readFile("supabase/migrations/002_meal_prep.sql", "utf8"),
+    );
     const ids = {
       dhruv: "11111111-1111-4111-8111-111111111111",
       annanya: "22222222-2222-4222-8222-222222222222",

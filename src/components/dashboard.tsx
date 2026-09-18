@@ -18,7 +18,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/load";
-import type { Person, Profile } from "@/lib/types";
+import type { Person, Profile, Note } from "@/lib/types";
 import {
   addDays,
   canEditDay,
@@ -53,7 +53,8 @@ export function Dashboard({
   isToday?: boolean;
   preview?: boolean;
 }) {
-  const { plan, profiles, progress, viewer, today, zone } = data;
+  const { plan, profiles, progress, viewer, zone } = data;
+  const today = data.trainingToday[person];
   const profile = profiles.find((p) => p.id === person)!;
   const partner = profiles.find((p) => p.id !== person)!;
   const own = viewer.id === person;
@@ -68,9 +69,9 @@ export function Dashboard({
   const tasks = plan.tasks
     .filter((t) => t.person === person && t.day === day)
     .sort((a, b) => a.position - b.position);
-  const meals = plan.meals.filter(
-    (m) => m.person === person && m.rotation_day === rotation,
-  );
+  const meals = plan.meals
+    .filter((m) => m.person === person && m.rotation_day === rotation)
+    .sort((a, b) => a.position - b.position);
   const href = (p: Person, v: View, d?: number) =>
     preview
       ? `/dev-preview?person=${p}&view=${v}&day=${d || day}`
@@ -92,8 +93,8 @@ export function Dashboard({
       )}
       {person === "dhruv" && selected.kind === "strength" && (
         <p className="footnote" style={{ marginBottom: 15 }}>
-          Controlled reps. Lower for 2–3 seconds; pause briefly. Rest 60–90 sec,
-          up to 2 min after difficult sets. Leave 1–3 good reps in reserve.
+          Controlled reps. Lower for 2–3 seconds; Rest 60–90 sec, up to 2 min
+          after difficult sets. Leave 1–3 good reps in reserve.
         </p>
       )}
       {person === "annanya" && (
@@ -126,7 +127,7 @@ export function Dashboard({
         {person === "dhruv"
           ? rotation && [2, 4, 6].includes(rotation)
             ? "Vegetarian today · based on the actual weekday."
-            : "Two meals, around your training. Menus follow the actual weekday."
+            : "Three feedings, one training day. Menus follow the evening date’s weekday."
           : "Vegetarian, with room for choice. Optional snacks don’t affect completion."}
       </p>
       {!rotation ? (
@@ -139,6 +140,10 @@ export function Dashboard({
           <MealCard
             key={`${day}-${meal.id}`}
             meal={meal}
+            recipes={data.linkedRecipes.filter((r) => r.slot_id === meal.id)}
+            trainingDayDate={
+              profile.start_date ? addDays(profile.start_date, day - 1) : null
+            }
             options={plan.options.filter((o) => o.slot_id === meal.id)}
             progress={progress.mealProgress.find(
               (p) =>
@@ -151,9 +156,9 @@ export function Dashboard({
       )}
       {person === "dhruv" ? (
         <p className="notice">
-          PDF starting point: approximately 2,000–2,200 kcal and 100–120 g
-          protein/day. Adjust to energy, recovery, hunger and weight/waist
-          trend. Budget: about ₹100–150/day.
+          Budget ceiling: ₹100–150/day. Choose seasonal produce; reduce sausages
+          first if the basket is too expensive. Vegetarian days contain no eggs
+          or chicken sausages. Keep peanut-butter portions moderate.
         </p>
       ) : (
         <p className="notice">
@@ -533,11 +538,18 @@ export function Dashboard({
                     data={data}
                     href={href(partner.id, "overview")}
                   />
+                  {person === "dhruv" && (
+                    <KitchenGuide
+                      notes={plan.notes.filter(
+                        (n) => n.person === person && n.category === "kitchen",
+                      )}
+                    />
+                  )}
                   <div className="panel" style={{ marginTop: 22 }}>
                     <h3>Fuel the work.</h3>
                     <p className="footnote">
                       {person === "dhruv"
-                        ? "Meal 1 is around 12:00–12:30 AM; run around 2:00 AM; strength follows the run; Meal 2 around 4:30–5:00 AM. Protein powder is not required."
+                        ? "11 PM Meal 1 → 12:20–12:30 AM small shake/snack → 1–3 AM run and workout → 4 AM Meal 2. These belong to the evening’s training day, which rolls over at 5 AM. Protect the 5 AM–1 PM sleep block."
                         : "Include a clear protein source at 2–3 eating occasions daily. Keep convenient milk, curd, fruit, roasted chana or paneer/tofu sandwiches available when busy."}
                     </p>
                     <p className="footnote">
@@ -648,15 +660,23 @@ function Partner({
   data: DashboardData;
   href: string;
 }) {
-  const status = programStatus(profile.start_date, data.today);
+  const status = programStatus(
+    profile.start_date,
+    data.trainingToday[profile.id],
+  );
   const summary = daySummary(
     data.plan,
     data.progress,
     profile,
     status.day,
-    data.today,
+    data.trainingToday[profile.id],
   );
-  const total = overall(data.plan, data.progress, profile, data.today);
+  const total = overall(
+    data.plan,
+    data.progress,
+    profile,
+    data.trainingToday[profile.id],
+  );
   return (
     <section className="partner-card">
       <span className="eyebrow muted" style={{ marginBottom: 15 }}>
@@ -712,8 +732,9 @@ function ProgressView({
   editable: boolean;
   own: boolean;
 }) {
-  const { plan, progress, today } = data;
+  const { plan, progress } = data;
   const person = profile.id;
+  const today = data.trainingToday[person];
   const total = overall(plan, progress, profile, today);
   const week = Math.min(4, Math.ceil(day / 7));
   const metricDefs = plan.metrics.filter((m) => m.person === person);
@@ -938,5 +959,21 @@ function ProgressView({
         </div>
       </section>
     </>
+  );
+}
+
+function KitchenGuide({ notes }: { notes: Note[] }) {
+  return (
+    <section className="panel kitchen-guide" id="kitchen-guide">
+      <span className="eyebrow">From your updated plan · page 8</span>
+      <h2>Meal Prep Guide</h2>
+      <p className="muted">A little preparation for the nights ahead.</p>
+      {notes.map((note) => (
+        <details key={note.id}>
+          <summary>{note.title}</summary>
+          <p>{note.body}</p>
+        </details>
+      ))}
+    </section>
   );
 }

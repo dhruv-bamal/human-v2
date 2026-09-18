@@ -7,4 +7,5 @@ node_modules/
 .vercel/
 *.bundle
 .DS_Store
-docs/
+docs/*
+!docs/*.md

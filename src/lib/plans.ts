@@ -1,13 +1,14 @@
 // Human-readable transcription of the two supplied PDFs. See docs/PLAN_EXTRACTION.md.
 import type { PlanData, Person, Task, PlanDay, Metric } from "./types";
 import { sourceNotes } from "./source-notes";
+import { kitchenNotes } from "./kitchen-guide";
 const programs: PlanData["programs"] = [
   {
     id: "dhruv",
     name: "Dhruv",
     goal: "Bodyweight strength, stamina & fat loss",
     meal_basis: "weekday",
-    source: "Dhruv's 30 Days Workout Plan · 7 pages",
+    source: "Updated Workout Plan · 8 pages",
   },
   {
     id: "annanya",
@@ -83,7 +84,7 @@ const dwarm: Item = [
 const mobility: Item = [
   "Mobility & stretching",
   "20–30 min",
-  "Hips, calves, hamstrings, quadriceps, chest, shoulders and thoracic spine. Add an easy core circuit only if fresh.",
+  "Hips, calves, hamstrings, quadriceps, chest, shoulders and thoracic spine.",
   "recovery",
 ];
 const dA1: Item[] = [
@@ -96,11 +97,7 @@ const dA1: Item[] = [
 const dB1: Item[] = [
   ["Bodyweight squats", "4 × 15"],
   ["Reverse lunges", "3 × 10 / leg"],
-  [
-    "Stationary split squats",
-    "3 × 10 / leg",
-    "Bulgarian split squats only with a genuinely stable household surface.",
-  ],
+  ["Stationary split squats", "3 × 10 / leg", ""],
   ["Single-leg glute bridges", "3 × 12 / leg"],
   ["Calf raises", "4 × 20"],
 ];
@@ -124,7 +121,7 @@ const dB2: Item[] = [
   [
     "Stationary split squats",
     "3 × 12 / leg",
-    "Per-leg convention from the template. Use a stable surface if choosing Bulgarian split squats.",
+    "Per-leg convention from the unilateral movement; the day row abbreviates this.",
   ],
   ["Single-leg glute bridges", "3 × 15 / leg"],
   ["Calf raises", "4 × 25"],
@@ -246,7 +243,7 @@ function d(
       ...items,
     ],
     instructions,
-    day <= 21 ? 4 : 5,
+    day <= 28 ? 3 : 4,
   );
 }
 d(1, "A", "easy", dA1);
@@ -707,27 +704,40 @@ const meals: PlanData["meals"] = [],
   options: PlanData["options"] = [];
 const dMenus = [
   [
-    "Oats + milk + banana + 3 eggs",
-    "Rice + about 200 g chicken + dal + vegetables + curd",
+    "Vegetable masala oats + 2 eggs",
+    "Banana-milk shake",
+    "Egg-vegetable toast + 2 sausages + fruit",
   ],
   [
-    "Oats + milk + banana + roasted chana",
-    "Rice + 75–100 g dry soy chunks + dal + vegetables + curd",
+    "Peanut-butter banana oats + fruit",
+    "Banana-milk shake",
+    "Crunchy vegetable peanut-butter sandwich + milk + fruit",
   ],
   [
-    "Rice/roti + 3 eggs + banana + curd",
-    "Rice + about 200 g chicken + dal + vegetables",
+    "Vegetable omelette toast + fruit",
+    "Banana-milk shake",
+    "Masala oats + 4 eggs + cucumber/tomato",
   ],
   [
-    "Oats + milk + banana + peanuts",
-    "Rice + soy-chunk curry + dal + vegetables + curd",
+    "Fruit oatmeal + peanut butter",
+    "Banana OR banana-milk shake",
+    "Vegetable toast sandwiches + milk + fruit",
   ],
-  ["Oats + milk + 3 eggs + banana", "Rice + chicken + dal + vegetables + curd"],
   [
-    "Rice/roti + dal + curd + banana",
-    "Rice + 75–100 g soy chunks + dal + mixed vegetables",
+    "Egg-vegetable scramble toast + banana",
+    "Banana-milk shake",
+    "Sausage-vegetable skillet + bread + fruit",
   ],
-  ["Oats + milk + banana + 3 eggs", "Rice + chicken + dal + vegetables + curd"],
+  [
+    "Peanut-butter banana oatmeal + fruit",
+    "Banana-milk shake",
+    "Savory vegetable oats + milk + fruit",
+  ],
+  [
+    "Masala oats + 2 eggs + fruit",
+    "Banana-milk shake",
+    "Egg & sausage vegetable sandwich + fruit",
+  ],
 ];
 const aMenus = [
   [
@@ -814,10 +824,16 @@ for (const person of ["dhruv", "annanya"] as const) {
         ? [...row, "Only when genuinely hungry or meals are far apart"]
         : row;
     all.forEach((menu, j) => {
-      const id = `${person}-meal-${i + 1}-${j + 1}`;
+      // Stable pre/post meal IDs preserve all old completions. Snack is new.
+      const slot = person === "dhruv" ? ["1", "snack", "2"][j] : String(j + 1);
+      const id = `${person}-meal-${i + 1}-${slot}`;
       const label =
         person === "dhruv"
-          ? ["Meal 1 · Pre-training", "Meal 2 · Post-training"][j]
+          ? [
+              "Meal 1 · Main pre-training",
+              "Small pre-workout shake / snack",
+              "Meal 2 · Post-workout",
+            ][j]
           : [
               "Breakfast",
               "Lunch",
@@ -827,9 +843,11 @@ for (const person of ["dhruv", "annanya"] as const) {
             ][j];
       const notes =
         person === "dhruv"
-          ? j === 0
-            ? "12:00–12:30 AM. Keep easy to digest; avoid overly oily or excessively large meals."
-            : "4:30–5:00 AM. This may be the larger meal."
+          ? [
+              "Main pre-training meal.",
+              "Keep this feeding small. If milk feels heavy before running, use a banana alone or a small piece of toast instead.",
+              "After your run and bodyweight workout.",
+            ][j]
           : [
               "Add milk/curd or a small serving of paneer/tofu if mostly carbohydrate.",
               "Add dal, beans, curd, paneer or tofu; do not stop at roti + sabzi.",
@@ -844,6 +862,13 @@ for (const person of ["dhruv", "annanya"] as const) {
         position: j + 1,
         label,
         menu,
+        timing:
+          person === "dhruv"
+            ? ["11:00 PM", "12:20–12:30 AM", "4:00 AM"][j]
+            : "",
+        day_offset: person === "dhruv" && j > 0 ? 1 : 0,
+        vegetarian:
+          person === "dhruv" ? [2, 4, 6].includes(i + 1) || j === 1 : null,
         optional: person === "annanya" && (j === 4 || (i === 6 && j === 2)),
         notes,
       });
@@ -887,6 +912,6 @@ export const plan: PlanData = {
   tasks,
   meals,
   options,
-  notes: sourceNotes,
+  notes: [...sourceNotes, ...kitchenNotes],
   metrics,
 };

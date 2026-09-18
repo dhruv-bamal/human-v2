@@ -64,9 +64,9 @@ test("every start weekday preserves actual Tue/Thu/Sat vegetarian menus over all
       const meals = plan.meals.filter(
         (m) => m.person === "dhruv" && m.rotation_day === rotation,
       );
-      assert.equal(meals.length, 2);
+      assert.equal(meals.length, 3);
       if ([2, 4, 6].includes(actual))
-        assert(meals.every((m) => !/(eggs|chicken)/i.test(m.menu)));
+        assert(meals.every((m) => !/(egg|sausage|chicken)/i.test(m.menu)));
       assert.equal(rotationDay("annanya", day, start), ((day - 1) % 7) + 1);
     }
   assert.equal(rotationDay("dhruv", 1, null), null);
