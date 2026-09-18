@@ -118,15 +118,14 @@ This folder contains the complete application: SQL migrations, seed data, tests,
 
 `.env.local` remains local and is excluded by `.gitignore` and `.vercelignore`. `.env.example` is the committed template. The database URL and Auth mapping IDs are only needed for developer database scripts; Vercel needs only the four runtime variables listed in the deployment section. Set those in Vercel Project Settings, not in GitHub source.
 
-Once this folder contains the relocated `.git` directory, create an empty private GitHub repository without an initial README, then run from here (replace the example remote):
+This folder now has its own Git repository and the `origin` remote is configured as `https://github.com/dhruv-bamal/human-v2.git`. To publish subsequent changes, run from here:
 
 ```sh
 git add .
 git commit -m "Prepare portable Vercel project"
-git remote add origin git@github.com:YOUR_ACCOUNT/human-v2.git
 git push -u origin main
 ```
 
-Skip the commit command if there are no uncommitted changes. The GitHub Actions workflow installs locked dependencies, checks TypeScript and lint, runs PostgreSQL policy tests, and builds the application. It needs no Supabase or database secrets: tests use an isolated embedded database. A GitHub push does not run hosted migrations or seeds. No GitHub remote is configured automatically.
+Skip the commit command if there are no uncommitted changes. The GitHub Actions workflow installs locked dependencies, checks TypeScript and lint, runs PostgreSQL policy tests, and builds the application. It needs no Supabase or database secrets: tests use an isolated embedded database. A GitHub push does not run hosted migrations or seeds. The original repository history is retained locally in the ignored `project-history.bundle`; the current repository uses the new initial commit created during relocation.
 
 Configuration references: [Vercel project configuration](https://vercel.com/docs/project-configuration), [GitHub checkout](https://github.com/actions/checkout), and [Node setup](https://github.com/actions/setup-node).
