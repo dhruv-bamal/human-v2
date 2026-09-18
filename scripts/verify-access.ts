@@ -1,0 +1,81 @@
+import assert from "node:assert/strict";
+import { database } from "./db";
+const sql = database();
+const rollback = new Error("intentional rollback");
+let verified = false;
+try {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const response = await fetch(url + "/rest/v1/program_days?select=day", {
+    headers: { apikey: key },
+  });
+  assert(
+    response.status === 401 || response.status === 403,
+    "Anonymous request must be rejected",
+  );
+  const settings = await fetch(url + "/auth/v1/settings", {
+    headers: { apikey: key },
+  });
+  assert(settings.ok);
+  const authConfig = await settings.json();
+  assert.equal(
+    authConfig.disable_signup,
+    true,
+    "Public signup must be disabled",
+  );
+  console.log(
+    "Hosted API rejects anonymous plan access; public signup is disabled.",
+  );
+  const ready =
+    await sql`select p.id, u.email_confirmed_at is not null as confirmed from public.profiles p join auth.users u on u.id=p.auth_user_id order by p.id`;
+  assert.equal(ready.length, 2);
+  assert(ready.every((r) => r.confirmed));
+  console.log("Both mapped email accounts are confirmed.");
+  try {
+    await sql.begin(async (tx) => {
+      const identities =
+        await tx`select id,auth_user_id from public.profiles order by id for update`;
+      await tx`update public.profiles set start_date=public.local_today()-8`;
+      for (const { id, auth_user_id } of identities) {
+        await tx`select set_config('request.jwt.claim.sub',${auth_user_id},true)`;
+        await tx.unsafe("set local role authenticated");
+        assert.equal((await tx`select id from public.profiles`).length, 2);
+        await tx`insert into public.task_progress(person,day,task_id,completed) values(${id},1,${id + "-1-1"},true) on conflict(person,day,task_id) do update set completed=true`;
+        assert.equal(
+          (
+            await tx`select completed from public.task_progress where person=${id} and day=1 and task_id=${id + "-1-1"}`
+          )[0].completed,
+          true,
+        );
+        const peer = id === "dhruv" ? "annanya" : "dhruv";
+        await assert.rejects(
+          tx.savepoint(async (sp) => {
+            await sp`insert into public.task_progress(person,day,task_id,completed) values(${peer},1,${peer + "-1-1"},true) on conflict(person,day,task_id) do update set completed=true`;
+          }),
+        );
+        await assert.rejects(
+          tx.savepoint(async (sp) => {
+            await sp`insert into public.task_progress(person,day,task_id) values(${id},30,${id + "-30-1"})`;
+          }),
+        );
+        const changed =
+          await tx`update public.task_progress set completed=false where person=${peer} returning person`;
+        assert.equal(changed.length, 0);
+        await tx.unsafe("reset role");
+      }
+      verified = true;
+      throw rollback;
+    });
+  } catch (error) {
+    if (error !== rollback) throw error;
+  }
+  assert(verified);
+  console.log(
+    "Live PostgreSQL: both owners can save; both peer writes and future writes rejected. All test changes rolled back.",
+  );
+} catch {
+  console.error("Access verification failed. No test changes were committed.");
+  process.exitCode = 1;
+} finally {
+  await sql.end();
+}
